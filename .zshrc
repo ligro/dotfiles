@@ -1,341 +1,333 @@
+# Filename:      /etc/skel/.zshrc
+# Purpose:       config file for zsh (z shell)
+# Authors:       (c) grml-team (grml.org)
+# Bug-Reports:   see http://grml.org/bugs/
+# License:       This file is licensed under the GPL v2 or any later version.
+################################################################################
+# Nowadays, grml's zsh setup lives in only *one* zshrc file.
+# That is the global one: /etc/zsh/zshrc (from grml-etc-core).
+# It is best to leave *this* file untouched and do personal changes to
+# your zsh setup via ${HOME}/.zshrc.local which is loaded at the end of
+# the global zshrc.
+#
+# That way, we enable people on other operating systems to use our
+# setup, too, just by copying our global zshrc to their ${HOME}/.zshrc.
+# Adjustments would still go to the .zshrc.local file.
+################################################################################
 
-[[ -z "$SSH_CONNECTION" ]] && is_local=yes
-
-[[ $TERM = rxvt* ]] && TERM=rxvt  # urxvt only, TERM value is not recognized
-                                  # when logging on ssh servers
-
-autoload colors; colors  # so we can use $fg / $bg
-source /etc/profile  # autojump support
-source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
-# Environment
-# ===========
-
-export EDITOR=vim
-export PATH=$PATH:~/bin:~/.gem/ruby/2.1.0/bin:~/.composer/vendor/bin
-export PAGER=less
-export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
-
-
-
-# History
-# =======
-
-export HISTSIZE=100000  # huge history size
-export SAVEHIST=100000  # save all history when quitting
-export HISTFILE=~/.zhistory  # in this file
-setopt share_history  # share history between ttys
-setopt hist_ignore_all_dups  # do not save a command twice
-setopt hist_reduce_blanks  # save the command "echo   plop" as "echo plop"
-
-
-# Completion
-# ==========
-
-autoload compinit; compinit
-
-zstyle ':completion:*' menu yes select  # menu selection
-zstyle ':completion:*' format "$fg_bold[grey]%d$reset_color"  # Categories
-                                                              # format
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}  # List file colors
-zstyle ':completion:*' group-name ''  # Display everything in groups
-
-# Completers list
-zstyle ':completion:*' completer _expand _complete _match _approximate
-
-# Completion cache
-zstyle ':completion::complete:*' use-cache on
-zstyle ':completion::complete:*' cache-path ~/.zsh/cache/$HOST
-
-# Fuzzy completion
-zstyle ':completion:*' matcher-list '+m:{a-z}={A-Z} r:|[._-]=** r:|=**' '' '' \
-    '+m:{a-z}={A-Z} r:|[._-]=** r:|=**'
-zstyle ':completion:*:match:*' original only
-zstyle ':completion:*:approximate:*' max-errors 1 numeric
-
-# Do not suggest those users
-zstyle -d users
-zstyle ':completion:*:*:*:users' ignored-patterns \
-    adm apache bin daemon games gdm halt ident junkbust lp mail mailnull \
-    named news nfsnobody nobody nscd ntp operator pcap postgres radvd \
-    rpc rpcuser rpm shutdown squid sshd sync uucp vcsa xfs backup  bind  \
-    dictd  gnats  identd  irc  man  messagebus  postfix  proxy  sys  www-data \
-    avahi Debian-exim hplip list cupsys haldaemon ntpd proftpd statd \
-    dbus ftp hal http
-
-# Do not complete CVS directories
-zstyle ':completion:*:cd:*' ignored-patterns '(*/)#lost+found' '(*/)#CVS'
-zstyle ':completion:*:(all-|)files' ignored-patterns '(|*/)CVS'
-
-# Do not complete already selected arguments
-zstyle ':completion:*:(rm|kill|diff):*' ignore-line yes
-
-# Nice kill completion
-zstyle ':completion:*:kill:*' force-list always
-zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
-zstyle ':completion:*:*:kill:*:processes' list-colors \
-    '=(#b) #([0-9]#)*=0=01;31'
-
-
-# Key mapping
-# ===========
-
-# To know the corresponding string of a key comination, press ctrl + v then the
-# keys. This configuration is for rxvt terminal.
-
-bindkey -e  # emacs style (-v for vi)
-# rxvt
-# bindkey '^[[7~' beginning-of-line  # origin
-# bindkey '^[[8~' end-of-line  # end
-# bindkey '^[Od' backward-word  # ctrl + left
-# bindkey '^[Oc' forward-word  # ctrl + right
-# bindkey '^[[3^' delete-word  # ctrl + del
-# bindkey '^[[3~' delete-char  # del
-# bindkey '^H' backward-delete-word  # ctrl + backspace == ctrl + h
-
-# Xterm
-bindkey '^[[H' beginning-of-line  # origin
-bindkey '^[[F' end-of-line  # end
-bindkey '^[[1;5D' backward-word  # ctrl + left
-bindkey '^[[1;5C' forward-word  # ctrl + right
-bindkey '^[[3;5~' delete-word  # ctrl + del
-bindkey '^[[3~' delete-char  # del
-[ "$TERM" != "linux" ] && bindkey '^?' backward-delete-word  # ctrl + backspace == ctrl + h
-
-# Search history for a command beginning with the current input. It places the
-# cursor at the beginning of the command line.
-bindkey '^[[A' history-beginning-search-backward  # up
-bindkey '^[[B' history-beginning-search-forward  # down
-
-bindkey '^Z' push-input # stash the current input and pop it to the next
-                        # command prompt
-
-# Quick ../../..
-rationalise-dot() {
-    if [[ $LBUFFER = *.. ]]; then
-        LBUFFER+=/..
-    else
-        LBUFFER+=.
-    fi
-}
-zle -N rationalise-dot
-bindkey '.' rationalise-dot
-
-
-# Prompt
-# ======
-
-autoload -U promptinit; promptinit  # collection of predefined prompts
-setopt prompt_subst  # Allow for functions in the prompt.
-
-prompt_alk_setup() {
-    PROMPT="%{$fg_bold[blue]%}%~%(40l.
-. )%{$fg_no_bold[green]%}%#%{$reset_color%} "
-
-    if [ -z "$is_local" ]; then
-        # Remote prompt, prepend user@host
-        PROMPT="%{$fg_bold[red]%}%n@%m:$PROMPT"
-    fi
-
-    RPROMPT="\$(prompt_git_info) %{$fg[yellow]%}%D{%m-%d %H:%M}%{$reset_color%}"
-}
-
-prompt_themes="$prompt_themes alk"  # add our prompt to the collection, so we
-                                    # can select it by typing "prompt alk" and
-                                    # turning it off with "prompt off"
-prompt alk  # load our prompt
-
-
-# Aliases
-# =======
-has-command () {
-    which $1 &> /dev/null
-    return $?
-}
-
-eval `dircolors -b`  # nice colors with ls
-alias ls="ls --color=auto"
-alias l="ls --color=auto --ignore='*.pyc'"
-alias vi=vim
-alias v=vim
-alias :e=vim
-alias less='less -R'
-alias k=kate
-alias diffdists='ls *-dist -1 | sed "s/-dist//" | while read file; do echo "DIFF $file"; diff $file-dist $file; done'
-alias psg='ps aux | grep -v grep | grep'
-alias scu='systemctl --user'
-
-# Confirm file deletion / overright
-alias cp='cp -i'
-alias rm='rm -i'
-alias mv='mv -i'
-
-# End of line aliases
-alias -g P='|less'  # paginate
-alias -g S='&>/dev/null'  # silent
-alias -g CW='--color-words -w -b'
-alias -g L='|& less -S'
-
-# Open files based on their extension
-alias -s png=xv
-alias -s jpg=xv
-alias -s jpeg=xv
-
-if has-command ls++; then
-    alias ll=ls++
+## Inform users about upgrade path for grml's old zshrc layout, assuming that:
+## /etc/skel/.zshrc was installed as ~/.zshrc,
+## /etc/zsh/zshrc was installed as ~/.zshrc.global and
+## ~/.zshrc.local does not exist yet.
+if [ -r ~/.zshrc -a -r ~/.zshrc.global -a ! -r ~/.zshrc.local ] ; then
+    printf '-!-\n'
+    printf '-!- Looks like you are using the old zshrc layout of grml.\n'
+    printf '-!- Please read the notes in the grml-zsh-refcard, being'
+    printf '-!- available at: http://grml.org/zsh/\n'
+    printf '-!-\n'
+    printf '-!- If you just want to get rid of this warning message execute:\n'
+    printf '-!-        touch ~/.zshrc.local\n'
+    printf '-!-\n'
 fi
 
+## Settings for umask
+#if (( EUID == 0 )); then
+#    umask 002
+#else
+#    umask 022
+#fi
 
-# Other stuffs
-# ============
+## Now, we'll give a few examples of what you might want to use in your
+## .zshrc.local file (just copy'n'paste and uncomment it there):
 
-# Print stderr in red // too buggy, can't run sh nor sudo
-# exec 2>>(while read line; do
-#    print '\e[91m'${(q)line}'\e[0m' > /dev/tty
-#    print -n $'\0'
-# done &)
+## Prompt theme extension ##
 
-# Add every paths accessed by cd to directory stack (pushd / popd). Allows to
-# do "cd -1" to go back.
-setopt auto_pushd pushd_minus pushd_ignore_dups pushd_silent pushd_to_home \
-    auto_cd
+# Virtualenv support
 
-setopt no_clobber  # disallow > redirections to an existing file
-                   # ( >| to override)
+#function virtual_env_prompt () {
+#    REPLY=${VIRTUAL_ENV+(${VIRTUAL_ENV:t}) }
+#}
+#grml_theme_add_token  virtual-env -f virtual_env_prompt '%F{magenta}' '%f'
+#zstyle ':prompt:grml:left:setup' items rc virtual-env change-root user at host path vcs percent
 
-setopt hash_cmds hash_dirs  # command list cache
+## ZLE tweaks ##
 
-setopt no_bg_nice  # do not nice bg processes
+## use the vi navigation keys (hjkl) besides cursor keys in menu completion
+#bindkey -M menuselect 'h' vi-backward-char        # left
+#bindkey -M menuselect 'k' vi-up-line-or-history   # up
+#bindkey -M menuselect 'l' vi-forward-char         # right
+#bindkey -M menuselect 'j' vi-down-line-or-history # bottom
+
+## set command prediction from history, see 'man 1 zshcontrib'
+#is4 && zrcautoload predict-on && \
+#zle -N predict-on         && \
+#zle -N predict-off        && \
+#bindkey "^X^Z" predict-on && \
+#bindkey "^Z" predict-off
+
+## press ctrl-q to quote line:
+#mquote () {
+#      zle beginning-of-line
+#      zle forward-word
+#      # RBUFFER="'$RBUFFER'"
+#      RBUFFER=${(q)RBUFFER}
+#      zle end-of-line
+#}
+#zle -N mquote && bindkey '^q' mquote
+
+## define word separators (for stuff like backward-word, forward-word, backward-kill-word,..)
+#WORDCHARS='*?_-.[]~=/&;!#$%^(){}<>' # the default
+#WORDCHARS=.
+#WORDCHARS='*?_[]~=&;!#$%^(){}'
+#WORDCHARS='${WORDCHARS:s@/@}'
+
+# just type '...' to get '../..'
+#rationalise-dot() {
+#local MATCH
+#if [[ $LBUFFER =~ '(^|/| |	|'$'\n''|\||;|&)\.\.$' ]]; then
+#  LBUFFER+=/
+#  zle self-insert
+#  zle self-insert
+#else
+#  zle self-insert
+#fi
+#}
+#zle -N rationalise-dot
+#bindkey . rationalise-dot
+## without this, typing a . aborts incremental history search
+#bindkey -M isearch . self-insert
+
+#bindkey '\eq' push-line-or-edit
+
+## some popular options ##
+
+## add `|' to output redirections in the history
+#setopt histallowclobber
+
+## warning if file exists ('cat /dev/null > ~/.zshrc')
+#setopt NO_clobber
+
+## don't warn me about bg processes when exiting
+#setopt nocheckjobs
+
+## alert me if something failed
+#setopt printexitvalue
+
+## with spelling correction, assume dvorak kb
+#setopt dvorak
+
+## Allow comments even in interactive shells
+#setopt interactivecomments
 
 
-# xterm title
-case $TERM in
-    xterm*)
-        precmd () {
-            if [ -z "$is_local" ]; then
-                print -Pn "\e]0;%n@%m: %~\a"
-            else
-                print -Pn "\e]0; %~\a"
-            fi
-        }
-        ;;
-esac
+## compsys related snippets ##
 
-# Print stuff
-# ===========
+## changed completer settings
+#zstyle ':completion:*' completer _complete _correct _approximate
+#zstyle ':completion:*' expand prefix suffix
 
-if which fortune &> /dev/null; then
-    # fortune-mod-kaamelott from aur
-    # other nice fortune (for frenchies): fortune-mod-bashfr
-    fortune kaamelott 2> /dev/null || fortune
-fi
+## another different completer setting: expand shell aliases
+#zstyle ':completion:*' completer _expand_alias _complete _approximate
 
+## to have more convenient account completion, specify your logins:
+#my_accounts=(
+# {grml,grml1}@foo.invalid
+# grml-devel@bar.invalid
+#)
+#other_accounts=(
+# {fred,root}@foo.invalid
+# vera@bar.invalid
+#)
+#zstyle ':completion:*:my-accounts' users-hosts $my_accounts
+#zstyle ':completion:*:other-accounts' users-hosts $other_accounts
 
-function superpkill() {
+## add grml.org to your list of hosts
+#hosts+=(grml.org)
+#zstyle ':completion:*:hosts' hosts $hosts
 
-    if [ "$1" = "-f" ]
-    then
-        force=1
-        shift
-    else
-        force=
-    fi
+## telnet on non-default ports? ...well:
+## specify specific port/service settings:
+#telnet_users_hosts_ports=(
+#  user1@host1:
+#  user2@host2:
+#  @mail-server:{smtp,pop3}
+#  @news-server:nntp
+#  @proxy-server:8000
+#)
+#zstyle ':completion:*:*:telnet:*' users-hosts-ports $telnet_users_hosts_ports
 
-    if [ $# -eq 0 ]
-    then
-        echo "Usage: superpkill [-f] pattern"
-        return 1
-    fi
+## the default grml setup provides '..' as a completion. it does not provide
+## '.' though. If you want that too, use the following line:
+#zstyle ':completion:*' special-dirs true
 
-    pids=$(ps x -eo "%p %a" | grep -e "$1" | grep -Ev '^\s*[0-9]+ grep')
-    if [ -n "$pids" ]
-    then
-        echo "$pids"
-        if [ -z "$force" ]
-        then
-            echo "Ok? [Yn]"
-            read response
-            if [ -n "$response" ] && [ "$response" != "y" ]
-            then
-                return
-            fi
-        fi
+## aliases ##
 
-        kill `echo "$pids" | grep -Eo '^\s*[0-9]+' | tr -d ' '`
-    fi
-}
+## translate
+#alias u='translate -i'
+
+## ignore ~/.ssh/known_hosts entries
+#alias insecssh='ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "PreferredAuthentications=keyboard-interactive"'
 
 
-# Complete rewrite of olivierverdier git-prompt in pure zsh
-# https://github.com/olivierverdier/zsh-git-prompt
-# Much faster (no python overhead), and no cache needed as 'git status' has a
-# pretty good cache itself
-__GIT_AHEAD='â†‘'
-__GIT_BEHIND='â†“'
-__GIT_STAGED='â™¦'
-__GIT_CHANGED='âœš'
-__GIT_UNTRACKED='â€¦'
-__GIT_CLEAN='âœ”'
-__GIT_UNMERGED='âœ–'
-__GIT_SHA1=':'
+## global aliases (for those who like them) ##
 
-function prompt_git_info_mode() {
-    if [[ -e $(git rev-parse --git-dir)/$2 ]]; then
-        printf "($1)"
-    fi
-}
+#alias -g '...'='../..'
+#alias -g '....'='../../..'
+#alias -g BG='& exit'
+#alias -g C='|wc -l'
+#alias -g G='|grep'
+#alias -g H='|head'
+#alias -g Hl=' --help |& less -r'
+#alias -g K='|keep'
+#alias -g L='|less'
+#alias -g LL='|& less -r'
+#alias -g M='|most'
+#alias -g N='&>/dev/null'
+#alias -g R='| tr A-z N-za-m'
+#alias -g SL='| sort | less'
+#alias -g S='| sort'
+#alias -g T='|tail'
+#alias -g V='| vim -'
 
-function prompt_git_info() {
-    local staged=0
-    local unmerged=0
-    local changed=0
-    local untracked=0
-    local branch=""
-    local remote=""
+## instead of global aliase it might be better to use grmls $abk assoc array, whose contents are expanded after pressing ,.
+#$abk[SnL]="| sort -n | less"
 
-    while IFS="" read -r line; do
-        if [[ $line = (## *) ]]; then
-            if [[ $line =~ '^## (([^.\[(]|\.[^.\[(])+)[^\[(]*(\[.*?\])?$' ]]; then
-                branch=$match[1]
-                local d=$match[3]
-                [[ $d =~ 'behind ([0-9]+)' ]] &&
-                    remote="$remote$__GIT_BEHIND$match[1]"
-                [[ $d =~ 'ahead ([0-9]+)'  ]] &&
-                    remote="$remote$__GIT_AHEAD$match[1]"
-            else
-                branch="$__GIT_SHA1`git rev-parse --short HEAD`"
-            fi
-        elif [[ $line == ((DD|AA|U?|?U) *) ]]; then
-            unmerged=$(($unmerged + 1))
-        else
-            [[ $line == ([^? ]? *) ]] && staged=$(($staged + 1))
-            [[ $line == (?[^? ] *) ]] && changed=$(($changed + 1))
-            [[ $line == (\?\?\ *)  ]] && untracked=$(($untracked + 1))
-        fi
-    done < <(git status -s -unormal -b 2> /dev/null)
+## get top 10 shell commands:
+#alias top10='print -l ${(o)history%% *} | uniq -c | sort -nr | head -n 10'
 
-    [[ -z $branch ]] && return
+## Execute \kbd{./configure}
+#alias CO="./configure"
 
-    printf "%%{${fg[blue]}%%}%s%%{${fg[cyan]}%%}%s%%{$reset_color%%}" "$branch" "$remote"
-    if [[ $staged -eq 0 && $unmerged -eq 0 && $changed -eq 0
-       && $untracked -eq 0 ]]
-    then
-        printf "%%{${fg_bold[green]}%%}$__GIT_CLEAN%%{$reset_color%%}"
-    else
-        [[ $staged -gt 0    ]] &&
-            printf "%%{${fg[green]}%%}$__GIT_STAGED%d%%{$reset_color%%}" $staged
-        [[ $changed -gt 0   ]] && printf "$__GIT_CHANGED%d" $changed
-        [[ $unmerged -gt 0  ]] &&
-            printf "%%{${fg[red]}%%}$__GIT_UNMERGED%d%%{$reset_color%%}" $unmerged
-        [[ $untracked -gt 0 ]] && printf "$__GIT_UNTRACKED"
-    fi
+## Execute \kbd{./configure --help}
+#alias CH="./configure --help"
 
-    prompt_git_info_mode cherry-pick sequencer/todo
-    prompt_git_info_mode rebase      rebase-merge/git-rebase-todo
-    prompt_git_info_mode merge       MERGE_HEAD
-    prompt_git_info_mode bisect      BISECT_START
-}
+## miscellaneous code ##
 
-autoload -U edit-command-line
-zle -N edit-command-line
-bindkey '^X^e' edit-command-line
+## Use a default width of 80 for manpages for more convenient reading
+#export MANWIDTH=${MANWIDTH:-80}
+
+## Set a search path for the cd builtin
+#cdpath=(.. ~)
+
+## variation of our manzsh() function; pick you poison:
+#manzsh()  { /usr/bin/man zshall |  most +/"$1" ; }
+
+## Switching shell safely and efficiently? http://www.zsh.org/mla/workers/2001/msg02410.html
+#bash() {
+#    NO_SWITCH="yes" command bash "$@"
+#}
+#restart () {
+#    exec $SHELL $SHELL_ARGS "$@"
+#}
+
+## Handy functions for use with the (e::) globbing qualifier (like nt)
+#contains() { grep -q "$*" $REPLY }
+#sameas() { diff -q "$*" $REPLY &>/dev/null }
+#ot () { [[ $REPLY -ot ${~1} ]] }
+
+## get_ic() - queries imap servers for capabilities; real simple. no imaps
+#ic_get() {
+#    emulate -L zsh
+#    local port
+#    if [[ ! -z $1 ]] ; then
+#        port=${2:-143}
+#        print "querying imap server on $1:${port}...\n";
+#        print "a1 capability\na2 logout\n" | nc $1 ${port}
+#    else
+#        print "usage:\n  $0 <imap-server> [port]"
+#    fi
+#}
+
+## List all occurrences of programm in current PATH
+#plap() {
+#    emulate -L zsh
+#    if [[ $# = 0 ]] ; then
+#        echo "Usage:    $0 program"
+#        echo "Example:  $0 zsh"
+#        echo "Lists all occurrences of program in the current PATH."
+#    else
+#        ls -l ${^path}/*$1*(*N)
+#    fi
+#}
+
+## Find out which libs define a symbol
+#lcheck() {
+#    if [[ -n "$1" ]] ; then
+#        nm -go /usr/lib/lib*.a 2>/dev/null | grep ":[[:xdigit:]]\{8\} . .*$1"
+#    else
+#        echo "Usage: lcheck <function>" >&2
+#    fi
+#}
+
+## Download a file and display it locally
+#uopen() {
+#    emulate -L zsh
+#    if ! [[ -n "$1" ]] ; then
+#        print "Usage: uopen \$URL/\$file">&2
+#        return 1
+#    else
+#        FILE=$1
+#        MIME=$(curl --head $FILE | \
+#               grep Content-Type | \
+#               cut -d ' ' -f 2 | \
+#               cut -d\; -f 1)
+#        MIME=${MIME%$'\r'}
+#        curl $FILE | see ${MIME}:-
+#    fi
+#}
+
+## Memory overview
+#memusage() {
+#    ps aux | awk '{if (NR > 1) print $5;
+#                   if (NR > 2) print "+"}
+#                   END { print "p" }' | dc
+#}
+
+## print hex value of a number
+#hex() {
+#    emulate -L zsh
+#    if [[ -n "$1" ]]; then
+#        printf "%x\n" $1
+#    else
+#        print 'Usage: hex <number-to-convert>'
+#        return 1
+#    fi
+#}
+
+## log out? set timeout in seconds...
+## ...and do not log out in some specific terminals:
+#if [[ "${TERM}" == ([Exa]term*|rxvt|dtterm|screen*) ]] ; then
+#    unset TMOUT
+#else
+#    TMOUT=1800
+#fi
+
+## associate types and extensions (be aware with perl scripts and anwanted behaviour!)
+#check_com zsh-mime-setup || { autoload zsh-mime-setup && zsh-mime-setup }
+#alias -s pl='perl -S'
+
+## ctrl-s will no longer freeze the terminal.
+#stty erase "^?"
+
+## you want to automatically use a bigger font on big terminals?
+#if [[ "$TERM" == "xterm" ]] && [[ "$LINES" -ge 50 ]] && [[ "$COLUMNS" -ge 100 ]] && [[ -z "$SSH_CONNECTION" ]] ; then
+#    large
+#fi
+
+## Some quick Perl-hacks aka /useful/ oneliner
+#bew() { perl -le 'print unpack "B*","'$1'"' }
+#web() { perl -le 'print pack "B*","'$1'"' }
+#hew() { perl -le 'print unpack "H*","'$1'"' }
+#weh() { perl -le 'print pack "H*","'$1'"' }
+#pversion()    { perl -M$1 -le "print $1->VERSION" } # i. e."pversion LWP -> 5.79"
+#getlinks ()   { perl -ne 'while ( m/"((www|ftp|http):\/\/.*?)"/gc ) { print $1, "\n"; }' $* }
+#gethrefs ()   { perl -ne 'while ( m/href="([^"]*)"/gc ) { print $1, "\n"; }' $* }
+#getanames ()  { perl -ne 'while ( m/a name="([^"]*)"/gc ) { print $1, "\n"; }' $* }
+#getforms ()   { perl -ne 'while ( m:(\</?(input|form|select|option).*?\>):gic ) { print $1, "\n"; }' $* }
+#getstrings () { perl -ne 'while ( m/"(.*?)"/gc ) { print $1, "\n"; }' $*}
+#getanchors () { perl -ne 'while ( m/«([^«»\n]+)»/gc ) { print $1, "\n"; }' $* }
+#showINC ()    { perl -e 'for (@INC) { printf "%d %s\n", $i++, $_ }' }
+#vimpm ()      { vim `perldoc -l $1 | sed -e 's/pod$/pm/'` }
+#vimhelp ()    { vim -c "help $1" -c on -c "au! VimEnter *" }
+
+## END OF FILE #################################################################
