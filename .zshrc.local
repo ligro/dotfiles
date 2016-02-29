@@ -14,17 +14,10 @@ bindkey -e
 export PAGER="less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init"
 #export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 
-source $HOME/.utils.sh
-
-export PATH="$HOME/bin:$PATH:$(ruby -e 'puts Gem.user_dir')/bin"
-
 # for ruby gems bundle
 export GEM_HOME=$(ruby -e 'puts Gem.user_dir')
 
-alias mysql_prod_sql3_ro="pwd-man.sh -e -f nv sql3; ssh xen2 -t mysql -u nv_ro -h sql2 -p netvibes_ginger"
-alias mysql_qa="pwd-man.sh -e -f nv qaback; ssh qaback.vm -t mysql -u nv_qa -h localhost -p qa"
-alias mysql_trunk="pwd-man.sh -e -f nv trunkback; ssh trunkback.vm -t mysql -u nv_trunk -p nv_startpage_trunk -h localhost"
-alias cdp='cd $HOME/Projects/startpage'
+export PATH="$HOME/bin:$PATH:$GEM_HOME/bin"
 
 export PYTHONDOCS=/usr/share/doc/python/html/
 
@@ -36,7 +29,13 @@ function virtual_env_prompt () {
 grml_theme_add_token  virtual-env -f virtual_env_prompt '%F{magenta}' '%f'
 zstyle ':prompt:grml:left:setup' items rc virtual-env change-root user at host path vcs percent
 
-source /usr/bin/virtualenvwrapper.sh
+if [ -e /usr/bin/virtualenvwrapper.sh ]
+then
+    source /usr/bin/virtualenvwrapper.sh
+fi
 
-source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+if [ -e /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]
+then
+    source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
 
