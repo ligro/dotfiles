@@ -1,46 +1,7 @@
-# emacs bind key
-bindkey -e
+export GOPATH=$HOME/Projects/go
+export PATH=$PATH:$GOPATH/bin
 
-# The following lines were added by compinstall
-#zstyle :compinstall filename '/home/ligro/.zshrc'
-#
-#autoload -Uz compinit
-#compinit
-# End of lines added by compinstall
+# Load rbenv automatically by appending
+# # the following to ~/.zshrc:
 
-# Environment
-# ===========
-
-export PAGER="less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init"
-#export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
-
-# for ruby gems bundle
-export GEM_HOME=$(ruby -e 'puts Gem.user_dir')
-
-export PATH="$HOME/bin:$PATH:$GEM_HOME/bin"
-
-export PYTHONDOCS=/usr/share/doc/python/html/
-
-# Virtualenv support
-
-function virtual_env_prompt () {
-    REPLY=${VIRTUAL_ENV+(${VIRTUAL_ENV:t}) }
-}
-grml_theme_add_token  virtual-env -f virtual_env_prompt '%F{magenta}' '%f'
-zstyle ':prompt:grml:left:setup' items rc virtual-env change-root user at host path vcs percent
-
-if [ -e /usr/bin/virtualenvwrapper.sh ]
-then
-    source /usr/bin/virtualenvwrapper.sh
-fi
-
-if [ -e /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]
-then
-    source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-fi
-
-# Set SSH to use gpg-agent
-unset SSH_AGENT_PID
-if [ "${gnupg_SSH_AUTH_SOCK_by:-0}" -ne $$ ]; then
-  export SSH_AUTH_SOCK="${HOME}/.gnupg/S.gpg-agent.ssh"
-fi
+eval "$(rbenv init -)"
