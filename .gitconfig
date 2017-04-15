@@ -1,3 +1,19 @@
 [user]
-	email = ligro@daligro.net
-	name = Vincent Daligault
+    email = ligro@daligro.net
+    name = Vincent Daligault
+[color]
+    status = auto
+    ui = true
+[core]
+    whitespace = space-before-tab
+[alias]
+    co = checkout
+    st = status
+    di = diff -b
+    lgg = log --color --pretty=format:'%C(yellow)%h %Cgreen%an (%cd) %Creset%s %C(bold blue)%D%Creset' --all --graph
+    lgg20 = log --color --pretty=format:'%C(yellow)%h %Cgreen%an (%cd) %Creset%s %C(bold blue)%D%Creset' -n 20 --all --graph
+    lg = log --color --pretty=format:'%C(yellow)%h %Cgreen%an (%cd) %Creset%s %C(bold blue)%D%Creset'
+    lg20 = log --color --pretty=format:'%C(yellow)%h %Cgreen%an (%cd) %Creset%s %C(bold blue)%D%Creset' -n 20
+
+[push]
+	default = simple
