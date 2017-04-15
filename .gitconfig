@@ -1,3 +1,11 @@
 [user]
-	email = ligro@daligro.net
+	email = vdaligault@qosenergy.com
 	name = Vincent Daligault
+
+#[url "git@gitlab.qosenergy.com:"]
+#  insteadOf = http://gitlab.qosenergy.com/
+[credential]
+	helper = cache --timeout=3600
+
+[credential "https://gitlab.qosenergy.com"]
+  username = vdaligault
